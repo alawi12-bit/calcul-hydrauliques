@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Code — Calcul Hydraulique</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f5f7f2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+  }
+  .container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    padding: 2.5rem 2rem;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+  }
+  h1 { font-size: 1.3rem; color: #085041; margin-bottom: 0.3rem; }
+  .subtitle { font-size: 0.85rem; color: #5F5E5A; margin-bottom: 1.5rem; }
+  #qr-canvas { margin: 0 auto 1.5rem; display: block; }
+  .url-box {
+    background: #E1F5EE;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    color: #0F6E56;
+    word-break: break-all;
+    margin-bottom: 1.5rem;
+    font-family: monospace;
+  }
+  .steps {
+    text-align: left;
+    background: #f9faf8;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.85rem;
+    color: #444;
+    line-height: 1.9;
+  }
+  .steps li { margin-left: 1.2rem; }
+  .btn-print {
+    background: #1D9E75;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 2rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  .btn-print:hover { background: #0F6E56; }
+  .btn-dl {
+    background: white;
+    color: #1D9E75;
+    border: 1.5px solid #1D9E75;
+    border-radius: 8px;
+    padding: 0.65rem 2rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+  }
+  .note { font-size: 0.75rem; color: #888; margin-top: 1rem; line-height: 1.5; }
+  .steps-title { font-weight: 700; color: #085041; margin-bottom: 0.25rem; }
+
+  @media print {
+    body { background: white; }
+    .container { box-shadow: none; border: 1px solid #ccc; }
+    .btn-print, .btn-dl, .steps { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>⚙ Calcul Hydraulique</h1>
+  <p class="subtitle">Réseaux de chauffage — Dimensionnement DIN &amp; Pertes de charge</p>
+  <canvas id="qr-canvas"></canvas>
+  <div class="url-box" id="url-display">Chargement...</div>
+  <div class="steps">
+    <div class="steps-title">Comment utiliser :</div>
+    <ol>
+      <li>Scanner le QR code avec votre téléphone</li>
+      <li>L'interface s'ouvre directement dans le navigateur</li>
+      <li>Choisir l'onglet de calcul souhaité</li>
+      <li>Entrer vos paramètres et appuyer sur "Calculer"</li>
+    </ol>
+  </div>
+  <button class="btn-print" onclick="window.print()">🖨 Imprimer cette page</button>
+  <button class="btn-dl" onclick="downloadQR()">⬇ Télécharger le QR code (PNG)</button>
+  <p class="note">⚠ Ce QR code pointe vers un fichier local. Pour le partager, hébergez le fichier en ligne (voir instructions ci-dessous).</p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+<script>
+const TARGET_URL = "https://votre-lien-github-pages.github.io/calcul_hydraulique.html";
+
+document.getElementById('url-display').textContent = TARGET_URL;
+
+QRCode.toCanvas(document.getElementById('qr-canvas'), TARGET_URL, {
+  width: 260,
+  margin: 2,
+  color: { dark: '#085041', light: '#ffffff' },
+  errorCorrectionLevel: 'H'
+}, function(err) {
+  if(err) {
+    document.getElementById('qr-canvas').style.display = 'none';
+    document.getElementById('url-display').textContent = 'Erreur génération QR: ' + err;
+  }
+});
+
+function downloadQR() {
+  const canvas = document.getElementById('qr-canvas');
+  const link = document.createElement('a');
+  link.download = 'qrcode_calcul_hydraulique.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>

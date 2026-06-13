@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calcul Hydraulique — Réseaux de Chauffage</title>
+<style>
+  :root {
+    --c-bg: #f5f7f2;
+    --c-card: #ffffff;
+    --c-accent: #1D9E75;
+    --c-accent-dark: #0F6E56;
+    --c-accent-light: #E1F5EE;
+    --c-text: #1a1a1a;
+    --c-muted: #5F5E5A;
+    --c-border: #D3D1C7;
+    --c-danger: #E24B4A;
+    --c-warning: #BA7517;
+    --c-info: #378ADD;
+    --c-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    min-height: 100vh;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  header {
+    background: var(--c-accent-dark);
+    color: white;
+    padding: 1.25rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.01em; }
+  header p { font-size: 0.78rem; opacity: 0.8; margin-top: 2px; }
+
+  .tabs {
+    display: flex;
+    background: var(--c-card);
+    border-bottom: 1.5px solid var(--c-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex: 1;
+    min-width: 110px;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--c-muted);
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tab-btn.active {
+    color: var(--c-accent-dark);
+    border-bottom-color: var(--c-accent);
+    background: var(--c-accent-light);
+  }
+  .tab-panel { display: none; padding: 1rem; max-width: 700px; margin: 0 auto; }
+  .tab-panel.active { display: block; }
+
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--c-accent-dark);
+    margin: 1.25rem 0 0.6rem;
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid var(--c-accent-light);
+  }
+  .card {
+    background: var(--c-card);
+    border-radius: var(--radius);
+    box-shadow: var(--c-shadow);
+    border: 1px solid var(--c-border);
+    padding: 1.1rem 1.2rem;
+    margin-bottom: 1rem;
+  }
+  .card-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--c-accent-dark);
+    margin-bottom: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title svg { width: 18px; height: 18px; stroke: var(--c-accent); }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  label {
+    font-size: 0.73rem;
+    font-weight: 600;
+    color: var(--c-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  input, select {
+    border: 1.5px solid var(--c-border);
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.9rem;
+    color: var(--c-text);
+    background: var(--c-bg);
+    transition: border-color 0.18s;
+    width: 100%;
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--c-accent);
+    background: white;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 0.8rem;
+    background: var(--c-accent);
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.18s, transform 0.1s;
+    margin-top: 0.75rem;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn:hover { background: var(--c-accent-dark); }
+  .btn-secondary {
+    background: var(--c-card);
+    color: var(--c-accent-dark);
+    border: 1.5px solid var(--c-accent);
+    margin-top: 0.5rem;
+  }
+  .btn-secondary:hover { background: var(--c-accent-light); }
+
+  .result-box {
+    background: var(--c-accent-light);
+    border-left: 4px solid var(--c-accent);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.9rem 1rem;
+    margin-top: 1rem;
+    display: none;
+  }
+  .result-box.show { display: block; }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .result-item { }
+  .result-label { font-size: 0.7rem; color: var(--c-accent-dark); font-weight: 700; text-transform: uppercase; }
+  .result-value { font-size: 1.05rem; font-weight: 700; color: var(--c-text); }
+  .result-din {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--c-accent-dark);
+    text-align: center;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--c-border);
+    margin-top: 0.75rem;
+  }
+
+  .table-wrapper { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--c-border); margin-top: 0.75rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  th {
+    background: var(--c-accent-dark);
+    color: white;
+    padding: 0.55rem 0.6rem;
+    text-align: left;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--c-border);
+    color: var(--c-text);
+    white-space: nowrap;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f9faf8; }
+  .din-badge {
+    background: var(--c-accent-light);
+    color: var(--c-accent-dark);
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.78rem;
+    display: inline-block;
+  }
+  .regime-badge {
+    background: #FFF3CD;
+    color: #7d5a00;
+    font-weight: 600;
+    border-radius: 6px;
+    padding: 2px 7px;
+    font-size: 0.75rem;
+  }
+  .regime-badge.turb { background: #ffe8e8; color: #7a0000; }
+
+  .info-note {
+    background: #EAF3DE;
+    border: 1px solid #97C459;
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.8rem;
+    color: #3B6D11;
+    margin-bottom: 0.9rem;
+  }
+
+  .error-msg {
+    background: #FCEBEB;
+    border-left: 4px solid var(--c-danger);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    color: var(--c-danger);
+    margin-top: 0.75rem;
+    display: none;
+  }
+  .error-msg.show { display: block; }
+
+  .formula-box {
+    background: #F1EFE8;
+    border: 1px dashed var(--c-border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 0.8rem;
+    color: var(--c-muted);
+    margin-top: 0.75rem;
+    font-family: 'Courier New', monospace;
+    line-height: 1.8;
+  }
+  .formula-box span { color: var(--c-accent-dark); font-weight: 700; }
+
+  .pcs-row { margin-bottom: 6px; }
+  .pcs-row:last-child { margin-bottom: 0; }
+
+  @media (max-width: 500px) {
+    .form-row.triple { grid-template-columns: 1fr 1fr; }
+    .result-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚙ Calcul Hydraulique — Réseaux de Chauffage</h1>
+  <p>Dimensionnement DIN · Pertes de charge linéaires &amp; singulières</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('din')">Diamètre DIN</button>
+  <button class="tab-btn" onclick="showTab('pcl')">Perte de charge linéaire</button>
+  <button class="tab-btn" onclick="showTab('pcs')">Perte de charge singulière</button>
+  <button class="tab-btn" onclick="showTab('ref')">Tableau DIN</button>
+</div>
+
+<!-- ==================== ONGLET 1 : CALCUL DIN ==================== -->
+<div id="tab-din" class="tab-panel active">
+
+  <div class="info-note">
+    Entrez la puissance, les températures et la vitesse pour trouver le diamètre normalisé DIN de la conduite.
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Propriétés du fluide
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Saison</label>
+        <select id="din-saison" onchange="updateCp()">
+          <option value="hiver">Hiver</option>
+          <option value="ete">Été</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Sens</label>
+        <select id="din-sens">
+          <option value="depart">Départ (aller)</option>
+          <option value="retour">Retour</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Te — Température entrée (°C)</label>
+        <input type="number" id="din-Te" value="130" step="1">
+      </div>
+      <div class="field">
+        <label>Ts — Température sortie (°C)</label>
+        <input type="number" id="din-Ts" value="110" step="1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Cpe — Chaleur sp. entrée (kJ/kg·K)</label>
+        <input type="number" id="din-Cpe" value="4.243" step="0.001">
+      </div>
+      <div class="field">
+        <label>Cps — Chaleur sp. sortie (kJ/kg·K)</label>
+        <input type="number" id="din-Cps" value="4.203" step="0.001">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>ρ eau (kg/m³)</label>
+        <input type="number" id="din-rho" value="923.2" step="0.1">
+      </div>
+      <div class="field">
+        <label>Vitesse (m/s)</label>
+        <input type="number" id="din-v" value="1.2" step="0.05">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Conduite à dimensionner
+    </div>
+    <div class="form-row single">
+      <div class="field">
+        <label>Puissance thermique (kW)</label>
+        <input type="number" id="din-P" value="600" step="10">
+      </div>
+    </div>
+    <button class="btn" onclick="calculerDIN()">Calculer le diamètre DIN</button>
+    <div id="din-error" class="error-msg"></div>
+    <div id="din-result" class="result-box">
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-label">Débit massique</div>
+          <div class="result-value" id="res-qm">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Débit volumique</div>
+          <div class="result-value" id="res-qv">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Section calculée</div>
+          <div class="result-value" id="res-sec">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Ø calculé int.</div>
+          <div class="result-value" id="res-dcalc">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Ø normalisé int.</div>
+          <div class="result-value" id="res-dnorm">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Vitesse réelle</div>
+          <div class="result-value" id="res-vreal">—</div>
+        </div>
+      </div>
+      <div class="result-din" id="res-din">—</div>
+    </div>
+    <div class="formula-box">
+      <span>ṁ</span> = P / (Cpe·|Te-Ts|) &nbsp;[kg/s]<br>
+      <span>Qv</span> = ṁ / ρ &nbsp;[m³/s]<br>
+      <span>S</span> = Qv / V &nbsp;[m²]<br>
+      <span>D_int</span> = √(4·S/π) &nbsp;[mm]<br>
+      → Arrondi au DIN normalisé supérieur
+    </div>
+  </div>
+
+  <!-- Calcul multi-conduites -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Tableau multi-conduites
+    </div>
+    <p style="font-size:0.8rem; color:var(--c-muted); margin-bottom:0.75rem;">Entrez les puissances séparées par des virgules (ex: 200,600,1000)</p>
+    <div class="form-row single">
+      <div class="field">
+        <label>Puissances (kW)</label>
+        <input type="text" id="din-multi-P" value="200, 600, 1000, 1800, 4000" placeholder="200, 600, 1800...">
+      </div>
+    </div>
+    <button class="btn" onclick="calculerMultiDIN()">Calculer le tableau</button>
+    <div id="din-multi-result"></div>
+  </div>
+</div>
+
+<!-- ==================== ONGLET 2 : PERTE DE CHARGE LINÉAIRE ==================== -->
+<div id="tab-pcl" class="tab-panel">
+
+  <div class="info-note">
+    Calcul de la perte de charge linéaire par la formule de Darcy-Weisbach avec le facteur de friction de Colebrook-White.
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><polyline points="9 9 12 6 15 9 18 6"/></svg>
+      Paramètres de la conduite
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Débit volumique Qv (m³/s)</label>
+        <input type="number" id="pcl-qv" value="0.04854" step="0.0001">
+      </div>
+      <div class="field">
+        <label>Diamètre intérieur D (mm)</label>
+        <input type="number" id="pcl-D" value="263" step="0.1">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Masse vol. ρ (kg/m³)</label>
+        <input type="number" id="pcl-rho" value="923.2" step="0.1">
+      </div>
+      <div class="field">
+        <label>Viscosité dyn. μ (kg/m·s)</label>
+        <input type="number" id="pcl-mu" value="0.0002317" step="0.000001">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Rugosité ε (mm)</label>
+        <input type="number" id="pcl-eps" value="0.05" step="0.005">
+      </div>
+      <div class="field">
+        <label>Longueur L (m)</label>
+        <input type="number" id="pcl-L" value="500" step="1">
+      </div>
+    </div>
+    <button class="btn" onclick="calculerPCL()">Calculer la perte de charge</button>
+    <div id="pcl-error" class="error-msg"></div>
+    <div id="pcl-result" class="result-box">
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-label">Vitesse réelle</div>
+          <div class="result-value" id="pcl-vreal">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Nombre de Reynolds</div>
+          <div class="result-value" id="pcl-Re">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Régime</div>
+          <div class="result-value" id="pcl-regime">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Facteur λ</div>
+          <div class="result-value" id="pcl-lambda">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">ΔPL (Pa)</div>
+          <div class="result-value" id="pcl-dpl-pa">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">ΔPL (Bar)</div>
+          <div class="result-value" id="pcl-dpl-bar">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="formula-box">
+      <span>Re</span> = ρ·V·D / μ<br>
+      <span>λ</span> = Colebrook-White (itératif)<br>
+      <span>ΔPL</span> = λ · (L/D) · ρ·V²/2 &nbsp;[Pa]
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ONGLET 3 : PERTE DE CHARGE SINGULIÈRE ==================== -->
+<div id="tab-pcs" class="tab-panel">
+
+  <div class="info-note">
+    Calcul de la perte de charge singulière : ΔPs = K · ρ · V² / 2
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      Singularité
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Type de singularité</label>
+        <select id="pcs-type" onchange="updateK()">
+          <option value="1.4">Double T (K = 1.4)</option>
+          <option value="1.3">Coude 90° angle vif (K = 1.3)</option>
+          <option value="0.5">Entrée brusque (K = 0.5)</option>
+          <option value="1.0">Sortie brusque (K = 1.0)</option>
+          <option value="0.9">Coude 90° arrondi (K = 0.9)</option>
+          <option value="0.3">Vanne plein ouvert (K = 0.3)</option>
+          <option value="custom">Personnalisé</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Coefficient K</label>
+        <input type="number" id="pcs-K" value="1.4" step="0.05">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <label>Débit volumique Qv (m³/s)</label>
+        <input type="number" id="pcs-qv" value="0.04854" step="0.0001">
+      </div>
+      <div class="field">
+        <label>Diamètre intérieur D (mm)</label>
+        <input type="number" id="pcs-D" value="263" step="0.1">
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="field">
+        <label>Masse volumique ρ (kg/m³)</label>
+        <input type="number" id="pcs-rho" value="923.2" step="0.1">
+      </div>
+    </div>
+    <button class="btn" onclick="calculerPCS()">Calculer</button>
+    <div id="pcs-error" class="error-msg"></div>
+    <div id="pcs-result" class="result-box">
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="result-label">Vitesse réelle</div>
+          <div class="result-value" id="pcs-vreal">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Coefficient K</div>
+          <div class="result-value" id="pcs-K-res">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">ΔPs (Pa)</div>
+          <div class="result-value" id="pcs-dps-pa">—</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">ΔPs (Bar)</div>
+          <div class="result-value" id="pcs-dps-bar">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cumul singularités -->
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Cumul de singularités
+    </div>
+    <p style="font-size:0.8rem; color:var(--c-muted); margin-bottom:0.75rem;">Même tronçon, plusieurs singularités. Entrez le débit volumique, le diamètre et la masse volumique une fois.</p>
+    <div class="form-row">
+      <div class="field">
+        <label>Qv (m³/s)</label>
+        <input type="number" id="cum-qv" value="0.04854" step="0.0001">
+      </div>
+      <div class="field">
+        <label>D intérieur (mm)</label>
+        <input type="number" id="cum-D" value="263" step="0.1">
+      </div>
+    </div>
+    <div class="form-row single">
+      <div class="field">
+        <label>ρ (kg/m³)</label>
+        <input type="number" id="cum-rho" value="923.2" step="0.1">
+      </div>
+    </div>
+    <div id="cum-singularites">
+      <div class="pcs-row form-row" id="sing-0">
+        <div class="field">
+          <label>Type</label>
+          <select onchange="syncK(this)">
+            <option value="1.4">Double T (1.4)</option>
+            <option value="1.3">Coude 90° (1.3)</option>
+            <option value="0.5">Entrée (0.5)</option>
+            <option value="1.0">Sortie (1.0)</option>
+            <option value="custom">Autre</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>K</label>
+          <input type="number" class="k-val" value="1.4" step="0.05">
+        </div>
+        <div class="field">
+          <label>Quantité</label>
+          <input type="number" class="k-qty" value="1" min="1" step="1">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="ajouterSingularite()">+ Ajouter une singularité</button>
+    <button class="btn" onclick="calculerCumul()">Calculer le total ΔPs</button>
+    <div id="cum-result" class="result-box"></div>
+  </div>
+</div>
+
+<!-- ==================== ONGLET 4 : TABLEAU DIN ==================== -->
+<div id="tab-ref" class="tab-panel">
+  <div class="info-note">Tableau de référence des diamètres normalisés acier (EN 10255 / DIN 2448).</div>
+  <div class="table-wrapper">
+    <table id="ref-table">
+      <thead>
+        <tr>
+          <th>DIN</th>
+          <th>Ø ext (mm)</th>
+          <th>Ép. (mm)</th>
+          <th>Ø int (mm)</th>
+          <th>Désignation</th>
+        </tr>
+      </thead>
+      <tbody id="ref-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const DIN_TABLE = [
+  {din:20, ext:26.9, ep:2.0, int:22.9, nom:"DN 20"},
+  {din:25, ext:33.7, ep:2.3, int:29.1, nom:"DN 25"},
+  {din:32, ext:42.4, ep:2.6, int:37.2, nom:"DN 32"},
+  {din:40, ext:48.3, ep:2.6, int:43.1, nom:"DN 40"},
+  {din:50, ext:60.3, ep:2.9, int:54.5, nom:"DN 50"},
+  {din:65, ext:76.1, ep:2.9, int:70.3, nom:"DN 65"},
+  {din:80, ext:88.9, ep:3.2, int:82.5, nom:"DN 80"},
+  {din:100, ext:114.3, ep:3.6, int:107.1, nom:"DN 100"},
+  {din:125, ext:139.7, ep:3.6, int:132.5, nom:"DN 125"},
+  {din:150, ext:168.3, ep:4.0, int:160.3, nom:"DN 150"},
+  {din:200, ext:219.1, ep:4.5, int:210.1, nom:"DN 200"},
+  {din:250, ext:273.0, ep:5.0, int:263.0, nom:"DN 250"},
+  {din:300, ext:323.9, ep:5.6, int:312.7, nom:"DN 300"},
+  {din:350, ext:355.6, ep:5.6, int:344.4, nom:"DN 350"},
+  {din:400, ext:406.4, ep:6.3, int:393.8, nom:"DN 400"},
+  {din:450, ext:457.0, ep:6.3, int:444.4, nom:"DN 450"},
+  {din:500, ext:508.0, ep:6.3, int:495.4, nom:"DN 500"},
+  {din:600, ext:610.0, ep:7.1, int:595.8, nom:"DN 600"},
+  {din:700, ext:711.0, ep:8.0, int:695.0, nom:"DN 700"},
+  {din:800, ext:813.0, ep:8.8, int:795.4, nom:"DN 800"},
+];
+
+function showTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function updateCp() {
+  const s = document.getElementById('din-saison').value;
+  if(s === 'hiver') {
+    document.getElementById('din-Te').value = 130;
+    document.getElementById('din-Ts').value = 110;
+    document.getElementById('din-Cpe').value = 4.243;
+    document.getElementById('din-Cps').value = 4.203;
+    document.getElementById('din-rho').value = 923.2;
+  } else {
+    document.getElementById('din-Te').value = 100;
+    document.getElementById('din-Ts').value = 80;
+    document.getElementById('din-Cpe').value = 4.192;
+    document.getElementById('din-Cps').value = 4.188;
+    document.getElementById('din-rho').value = 949.0;
+  }
+}
+
+function getDINNorm(d_mm) {
+  for(const row of DIN_TABLE) {
+    if(row.int >= d_mm) return row;
+  }
+  return DIN_TABLE[DIN_TABLE.length-1];
+}
+
+function calcDINCore(P_kW, Te, Ts, Cpe, Cps, rho, V, sens) {
+  const Cp = sens === 'depart' ? Cpe : Cps;
+  const dT = Math.abs(Te - Ts);
+  if(dT === 0) return null;
+  const qm = P_kW / (Cp * dT);
+  const qv = qm / rho;
+  const S = qv / V;
+  const D_calc = Math.sqrt(4 * S / Math.PI) * 1000;
+  const dinRow = getDINNorm(D_calc);
+  const D_norm = dinRow.int;
+  const S_norm = Math.PI * (D_norm/1000)**2 / 4;
+  const V_real = qv / S_norm;
+  return { qm, qv, S, D_calc, D_norm, din: dinRow.nom, V_real, dinRow };
+}
+
+function calculerDIN() {
+  const P = parseFloat(document.getElementById('din-P').value);
+  const Te = parseFloat(document.getElementById('din-Te').value);
+  const Ts = parseFloat(document.getElementById('din-Ts').value);
+  const Cpe = parseFloat(document.getElementById('din-Cpe').value);
+  const Cps = parseFloat(document.getElementById('din-Cps').value);
+  const rho = parseFloat(document.getElementById('din-rho').value);
+  const V = parseFloat(document.getElementById('din-v').value);
+  const sens = document.getElementById('din-sens').value;
+  const err = document.getElementById('din-error');
+  const res = document.getElementById('din-result');
+
+  if(!P||!Te||!Ts||!Cpe||!Cps||!rho||!V) {
+    err.textContent = 'Tous les champs sont obligatoires.'; err.classList.add('show'); res.classList.remove('show'); return;
+  }
+  if(Math.abs(Te-Ts)<1) {
+    err.textContent = 'ΔT trop faible (Te ≈ Ts). Vérifiez les températures.'; err.classList.add('show'); res.classList.remove('show'); return;
+  }
+  err.classList.remove('show');
+
+  const r = calcDINCore(P, Te, Ts, Cpe, Cps, rho, V, sens);
+  document.getElementById('res-qm').textContent = r.qm.toFixed(4) + ' kg/s';
+  document.getElementById('res-qv').textContent = (r.qv*1000).toFixed(4) + ' L/s';
+  document.getElementById('res-sec').textContent = (r.S*1e4).toFixed(4) + ' cm²';
+  document.getElementById('res-dcalc').textContent = r.D_calc.toFixed(2) + ' mm';
+  document.getElementById('res-dnorm').textContent = r.D_norm.toFixed(1) + ' mm';
+  document.getElementById('res-vreal').textContent = r.V_real.toFixed(3) + ' m/s';
+  document.getElementById('res-din').textContent = r.din;
+  res.classList.add('show');
+}
+
+function calculerMultiDIN() {
+  const raw = document.getElementById('din-multi-P').value;
+  const Te = parseFloat(document.getElementById('din-Te').value);
+  const Ts = parseFloat(document.getElementById('din-Ts').value);
+  const Cpe = parseFloat(document.getElementById('din-Cpe').value);
+  const Cps = parseFloat(document.getElementById('din-Cps').value);
+  const rho = parseFloat(document.getElementById('din-rho').value);
+  const V = parseFloat(document.getElementById('din-v').value);
+  const sens = document.getElementById('din-sens').value;
+  const powers = raw.split(',').map(s=>parseFloat(s.trim())).filter(x=>!isNaN(x));
+  if(!powers.length) return;
+
+  let html = '<div class="table-wrapper" style="margin-top:1rem"><table><thead><tr><th>P (kW)</th><th>ṁ (kg/s)</th><th>Qv (L/s)</th><th>D calc (mm)</th><th>D norm (mm)</th><th>DIN</th><th>V réelle (m/s)</th></tr></thead><tbody>';
+  for(const P of powers) {
+    const r = calcDINCore(P, Te, Ts, Cpe, Cps, rho, V, sens);
+    html += `<tr><td>${P}</td><td>${r.qm.toFixed(4)}</td><td>${(r.qv*1000).toFixed(4)}</td><td>${r.D_calc.toFixed(2)}</td><td>${r.D_norm.toFixed(1)}</td><td><span class="din-badge">${r.din}</span></td><td>${r.V_real.toFixed(3)}</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('din-multi-result').innerHTML = html;
+}
+
+function colebrook(Re, eps_D) {
+  if(Re < 2300) return 64/Re;
+  let lam = 0.02;
+  for(let i=0;i<100;i++){
+    const f = -2*Math.log10(eps_D/3.7 + 2.51/(Re*Math.sqrt(lam)));
+    const lam_new = 1/(f*f);
+    if(Math.abs(lam_new-lam)<1e-10) { lam=lam_new; break; }
+    lam = lam_new;
+  }
+  return lam;
+}
+
+function getRegime(Re) {
+  if(Re < 2300) return {label:'Laminaire', cl:'lam'};
+  if(Re < 4000) return {label:'Transitoire', cl:'trans'};
+  return {label:'Turbulent rugueux', cl:'turb'};
+}
+
+function calculerPCL() {
+  const Qv = parseFloat(document.getElementById('pcl-qv').value);
+  const D_mm = parseFloat(document.getElementById('pcl-D').value);
+  const rho = parseFloat(document.getElementById('pcl-rho').value);
+  const mu = parseFloat(document.getElementById('pcl-mu').value);
+  const eps = parseFloat(document.getElementById('pcl-eps').value);
+  const L = parseFloat(document.getElementById('pcl-L').value);
+  const err = document.getElementById('pcl-error');
+  const res = document.getElementById('pcl-result');
+
+  if(!Qv||!D_mm||!rho||!mu||!L) {
+    err.textContent='Tous les champs sont obligatoires.'; err.classList.add('show'); res.classList.remove('show'); return;
+  }
+  err.classList.remove('show');
+
+  const D = D_mm/1000;
+  const S = Math.PI*D*D/4;
+  const V = Qv/S;
+  const Re = rho*V*D/mu;
+  const eps_D = (eps/1000)/D;
+  const lam = colebrook(Re, eps_D);
+  const dPL = lam*(L/D)*(rho*V*V/2);
+  const reg = getRegime(Re);
+
+  document.getElementById('pcl-vreal').textContent = V.toFixed(4)+' m/s';
+  document.getElementById('pcl-Re').textContent = Re.toFixed(0);
+  document.getElementById('pcl-regime').innerHTML = `<span class="regime-badge ${reg.cl}">${reg.label}</span>`;
+  document.getElementById('pcl-lambda').textContent = lam.toFixed(6);
+  document.getElementById('pcl-dpl-pa').textContent = dPL.toFixed(2)+' Pa';
+  document.getElementById('pcl-dpl-bar').textContent = (dPL/1e5).toFixed(5)+' Bar';
+  res.classList.add('show');
+}
+
+function updateK() {
+  const sel = document.getElementById('pcs-type');
+  const v = sel.value;
+  if(v !== 'custom') document.getElementById('pcs-K').value = v;
+}
+
+function calculerPCS() {
+  const Qv = parseFloat(document.getElementById('pcs-qv').value);
+  const D_mm = parseFloat(document.getElementById('pcs-D').value);
+  const rho = parseFloat(document.getElementById('pcs-rho').value);
+  const K = parseFloat(document.getElementById('pcs-K').value);
+  const err = document.getElementById('pcs-error');
+  const res = document.getElementById('pcs-result');
+
+  if(!Qv||!D_mm||!rho||!K) {
+    err.textContent='Tous les champs sont obligatoires.'; err.classList.add('show'); res.classList.remove('show'); return;
+  }
+  err.classList.remove('show');
+
+  const D = D_mm/1000;
+  const S = Math.PI*D*D/4;
+  const V = Qv/S;
+  const dPs = K * rho * V*V / 2;
+
+  document.getElementById('pcs-vreal').textContent = V.toFixed(4)+' m/s';
+  document.getElementById('pcs-K-res').textContent = K.toFixed(2);
+  document.getElementById('pcs-dps-pa').textContent = dPs.toFixed(2)+' Pa';
+  document.getElementById('pcs-dps-bar').textContent = (dPs/1e5).toFixed(6)+' Bar';
+  res.classList.add('show');
+}
+
+let singCount = 1;
+function syncK(sel) {
+  const row = sel.closest('.pcs-row');
+  const k = row.querySelector('.k-val');
+  if(sel.value !== 'custom') k.value = sel.value;
+}
+function ajouterSingularite() {
+  const id = 'sing-'+singCount++;
+  const div = document.createElement('div');
+  div.className = 'pcs-row form-row';
+  div.id = id;
+  div.innerHTML = `
+    <div class="field"><label>Type</label>
+      <select onchange="syncK(this)">
+        <option value="1.4">Double T (1.4)</option>
+        <option value="1.3">Coude 90° (1.3)</option>
+        <option value="0.5">Entrée (0.5)</option>
+        <option value="1.0">Sortie (1.0)</option>
+        <option value="custom">Autre</option>
+      </select></div>
+    <div class="field"><label>K</label><input type="number" class="k-val" value="1.4" step="0.05"></div>
+    <div class="field"><label>Quantité</label><input type="number" class="k-qty" value="1" min="1" step="1"></div>`;
+  document.getElementById('cum-singularites').appendChild(div);
+}
+
+function calculerCumul() {
+  const Qv = parseFloat(document.getElementById('cum-qv').value);
+  const D_mm = parseFloat(document.getElementById('cum-D').value);
+  const rho = parseFloat(document.getElementById('cum-rho').value);
+  const D = D_mm/1000;
+  const S = Math.PI*D*D/4;
+  const V = Qv/S;
+
+  const rows = document.querySelectorAll('#cum-singularites .pcs-row');
+  let total = 0;
+  let html = '<div class="table-wrapper" style="margin-top:0.75rem"><table><thead><tr><th>Type</th><th>K</th><th>Qté</th><th>ΔPs (Pa)</th></tr></thead><tbody>';
+  rows.forEach(row => {
+    const sel = row.querySelector('select');
+    const K = parseFloat(row.querySelector('.k-val').value);
+    const qty = parseInt(row.querySelector('.k-qty').value);
+    const dPs = K * rho * V*V/2 * qty;
+    total += dPs;
+    html += `<tr><td>${sel.options[sel.selectedIndex].text}</td><td>${K}</td><td>${qty}</td><td>${dPs.toFixed(2)}</td></tr>`;
+  });
+  html += `</tbody></table></div>
+  <div style="margin-top:0.75rem; text-align:center; font-size:1.1rem; font-weight:700; color:var(--c-accent-dark);">
+    ΔPs total = ${total.toFixed(2)} Pa &nbsp;|&nbsp; ${(total/1e5).toFixed(6)} Bar
+  </div>`;
+  const res = document.getElementById('cum-result');
+  res.innerHTML = html;
+  res.classList.add('show');
+}
+
+// Remplir le tableau de référence DIN
+(function() {
+  const tbody = document.getElementById('ref-tbody');
+  DIN_TABLE.forEach(r => {
+    tbody.innerHTML += `<tr>
+      <td><strong>${r.din}</strong></td>
+      <td>${r.ext}</td>
+      <td>${r.ep}</td>
+      <td><strong>${r.int}</strong></td>
+      <td><span class="din-badge">${r.nom}</span></td>
+    </tr>`;
+  });
+})();
+</script>
+</body>
+</html>
