@@ -133,6 +133,11 @@
     border-color: var(--c-accent);
     background: white;
   }
+  input[readonly] {
+    background: #ffffff;
+    font-weight: 700;
+    color: var(--c-accent-dark);
+  }
   .btn {
     display: block;
     width: 100%;
@@ -636,13 +641,13 @@
 <div id="tab-tot" class="tab-panel">
 
   <div class="info-note">
-    Cumulez les pertes de charge linéaires (ΔPL) et singulières (ΔPs) de chaque tronçon calculé dans les onglets précédents, puis affichez le total avec coefficient et conversion en mCE.
+    Affiche la somme des pertes de charge linéaires et singulières déjà calculées dans les onglets précédents, pour la saison choisie.
   </div>
 
   <div class="card">
     <div class="card-title">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      Saison
+      Perte de charge totale
     </div>
     <div class="form-row">
       <div class="field">
@@ -652,37 +657,6 @@
         <label><input type="radio" name="tot-saison" value="ete" style="width:auto; margin-right:6px;">Été</label>
       </div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Ajouter un tronçon
-    </div>
-    <div class="form-row">
-      <div class="field">
-        <label>ΔPL — perte linéaire (Pa)</label>
-        <input type="number" id="tot-pcl" value="0" step="0.01">
-      </div>
-      <div class="field">
-        <label>ΔPs — perte singulière (Pa)</label>
-        <input type="number" id="tot-pcs" value="0" step="0.01">
-      </div>
-    </div>
-    <button class="btn btn-secondary" onclick="ajouterTroncon()">Ajouter</button>
-    <div class="table-wrapper" style="margin-top:0.75rem;">
-      <table>
-        <thead><tr><th>#</th><th>Saison</th><th>ΔPL (Pa)</th><th>ΔPs (Pa)</th><th></th></tr></thead>
-        <tbody id="tot-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-      Coefficient &amp; affichage
-    </div>
     <div class="form-row single">
       <div class="field">
         <label>Coefficient correcteur</label>
@@ -690,37 +664,65 @@
       </div>
     </div>
     <button class="btn" onclick="afficherTotal()">Afficher</button>
-    <div id="tot-result" class="result-box">
-      <div class="result-grid">
-        <div class="result-item">
-          <div class="result-label">Perte de charge linéaire totale</div>
-          <div class="result-value" id="tot-res-pcl">—</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Perte de charge singulière totale</div>
-          <div class="result-value" id="tot-res-pcs">—</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Perte de charge totale</div>
-          <div class="result-value" id="tot-res-total">—</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Perte de charge totale (mCE)</div>
-          <div class="result-value" id="tot-res-mce">—</div>
-        </div>
+
+    <div class="form-row" style="margin-top:1rem; align-items:center;">
+      <div class="field">
+        <label>Perte de charge linéaire totale</label>
+        <input type="text" id="tot-res-pcl" value="—" readonly>
+      </div>
+      <div class="field" style="flex-direction:row; align-items:end; gap:6px;">
+        <span style="padding-bottom:0.55rem; font-weight:700;">Pa</span>
       </div>
     </div>
-    <div class="formula-box">
-      <span>Somme PCL</span> = Σ ΔPL (saison sélectionnée)<br>
-      <span>Somme PCS</span> = Σ ΔPs (saison sélectionnée)<br>
-      <span>valPCL</span> = sommePCL · coef &nbsp;|&nbsp; <span>valPCS</span> = sommePCS · coef<br>
-      <span>Total</span> = valPCL + valPCS &nbsp;[Pa]<br>
-      <span>Total (mCE)</span> = Total / 10000
+    <div class="form-row" style="align-items:center;">
+      <div class="field">
+        <label>Perte de charge singulière totale</label>
+        <input type="text" id="tot-res-pcs" value="—" readonly>
+      </div>
+      <div class="field" style="flex-direction:row; align-items:end; gap:6px;">
+        <span style="padding-bottom:0.55rem; font-weight:700;">Pa</span>
+      </div>
     </div>
+    <div class="form-row" style="align-items:center;">
+      <div class="field">
+        <label>Perte de charge totale</label>
+        <input type="text" id="tot-res-total" value="—" readonly>
+      </div>
+      <div class="field" style="flex-direction:row; align-items:end; gap:6px;">
+        <span style="padding-bottom:0.55rem; font-weight:700;">Pa</span>
+      </div>
+    </div>
+    <div class="form-row" style="align-items:center;">
+      <div class="field">
+        <label>&nbsp;</label>
+        <input type="text" id="tot-res-mce" value="—" readonly>
+      </div>
+      <div class="field" style="flex-direction:row; align-items:end; gap:6px;">
+        <span style="padding-bottom:0.55rem; font-weight:700;">mCE</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+      Graphique des tronçons
+    </div>
+    <div id="tot-chart"></div>
+  </div>
+
+  <div class="formula-box">
+    <span>sommePCL</span> = Σ ΔPL (tronçons enregistrés, saison sélectionnée)<br>
+    <span>sommePCS</span> = Σ ΔPs (tronçons enregistrés, saison sélectionnée)<br>
+    <span>valPCL</span> = sommePCL · coef &nbsp;|&nbsp; <span>valPCS</span> = sommePCS · coef<br>
+    <span>Total</span> = valPCL + valPCS &nbsp;[Pa]<br>
+    <span>Total (mCE)</span> = Total / 10000
   </div>
 </div>
 
 <script>
+let pcleData = [];
+let pcseData = [];
 const DIN_TABLE = [
   {din:20, ext:26.9, ep:2.0, int:22.9, nom:"DN 20"},
   {din:25, ext:33.7, ep:2.3, int:29.1, nom:"DN 25"},
@@ -891,6 +893,9 @@ function calculerPCL() {
   document.getElementById('pcl-dpl-pa').textContent = dPL.toFixed(2)+' Pa';
   document.getElementById('pcl-dpl-bar').textContent = (dPL/1e5).toFixed(5)+' Bar';
   res.classList.add('show');
+
+  const saison = document.getElementById('din-saison').value;
+  pcleData.push({saison, val: dPL});
 }
 
 function updateK() {
@@ -922,6 +927,9 @@ function calculerPCS() {
   document.getElementById('pcs-dps-pa').textContent = dPs.toFixed(2)+' Pa';
   document.getElementById('pcs-dps-bar').textContent = (dPs/1e5).toFixed(6)+' Bar';
   res.classList.add('show');
+
+  const saison = document.getElementById('din-saison').value;
+  pcseData.push({saison, val: dPs});
 }
 
 let singCount = 1;
@@ -978,6 +986,9 @@ function calculerCumul() {
   const res = document.getElementById('cum-result');
   res.innerHTML = html;
   res.classList.add('show');
+
+  const saison = document.getElementById('din-saison').value;
+  pcseData.push({saison, val: total});
 }
 
 // Remplir le tableau de référence DIN
@@ -995,56 +1006,55 @@ function calculerCumul() {
 })();
 
 // ==================== ONGLET 5 : PERTE DE CHARGE TOTALE ====================
-let troncons = [];
-let tronconId = 0;
-
-function ajouterTroncon() {
-  const pcl = parseFloat(document.getElementById('tot-pcl').value) || 0;
-  const pcs = parseFloat(document.getElementById('tot-pcs').value) || 0;
-  const saison = document.querySelector('input[name="tot-saison"]:checked').value;
-  const id = tronconId++;
-  troncons.push({id, saison, pcl, pcs});
-  renderTroncons();
-}
-
-function supprimerTroncon(id) {
-  troncons = troncons.filter(t => t.id !== id);
-  renderTroncons();
-}
-
-function renderTroncons() {
-  const tbody = document.getElementById('tot-tbody');
-  tbody.innerHTML = '';
-  troncons.forEach((t, idx) => {
-    const label = t.saison === 'hiver' ? 'Hiver' : 'Été';
-    tbody.innerHTML += `<tr>
-      <td>${idx+1}</td>
-      <td>${label}</td>
-      <td>${t.pcl.toFixed(2)}</td>
-      <td>${t.pcs.toFixed(2)}</td>
-      <td><button class="btn-secondary btn" style="padding:0.25rem 0.5rem; margin:0; font-size:0.75rem; width:auto;" onclick="supprimerTroncon(${t.id})">✕</button></td>
-    </tr>`;
-  });
-}
 
 function afficherTotal() {
   const saison = document.querySelector('input[name="tot-saison"]:checked').value;
   const coef = parseFloat(document.getElementById('tot-coef').value) || 1;
 
-  const filtres = troncons.filter(t => t.saison === saison);
-  const sommePCL = filtres.reduce((s,t) => s + t.pcl, 0);
-  const sommePCS = filtres.reduce((s,t) => s + t.pcs, 0);
+  const filtresPCL = pcleData.filter(t => t.saison === saison);
+  const filtresPCS = pcseData.filter(t => t.saison === saison);
+  const sommePCL = filtresPCL.reduce((s,t) => s + t.val, 0);
+  const sommePCS = filtresPCS.reduce((s,t) => s + t.val, 0);
 
   const valPCL = sommePCL * coef;
   const valPCS = sommePCS * coef;
   const total = valPCL + valPCS;
   const totalMCE = total / 10000;
 
-  document.getElementById('tot-res-pcl').textContent = valPCL.toFixed(3) + ' Pa';
-  document.getElementById('tot-res-pcs').textContent = valPCS.toFixed(3) + ' Pa';
-  document.getElementById('tot-res-total').textContent = total.toFixed(3) + ' Pa';
-  document.getElementById('tot-res-mce').textContent = totalMCE.toFixed(3) + ' mCE';
-  document.getElementById('tot-result').classList.add('show');
+  document.getElementById('tot-res-pcl').value = valPCL.toFixed(3);
+  document.getElementById('tot-res-pcs').value = valPCS.toFixed(3);
+  document.getElementById('tot-res-total').value = total.toFixed(3);
+  document.getElementById('tot-res-mce').value = totalMCE.toFixed(3);
+
+  renderTotChart(filtresPCL, filtresPCS);
+}
+
+function renderTotChart(filtresPCL, filtresPCS) {
+  const container = document.getElementById('tot-chart');
+  const bars = [];
+  filtresPCL.forEach((t,i) => bars.push({label:'PCL '+(i+1), val:t.val, color:'#1D9E75'}));
+  filtresPCS.forEach((t,i) => bars.push({label:'PCS '+(i+1), val:t.val, color:'#378ADD'}));
+
+  if(!bars.length) {
+    container.innerHTML = '<p style="font-size:0.8rem; color:var(--c-muted); text-align:center; padding:1rem;">Aucun tronçon enregistré pour cette saison. Effectuez des calculs dans les onglets PCL / PCS.</p>';
+    return;
+  }
+
+  const maxVal = Math.max(...bars.map(b=>b.val), 1);
+  const barW = 48, gap = 16, chartH = 180;
+  const w = bars.length * (barW+gap) + gap;
+
+  let svg = `<svg viewBox="0 0 ${w} ${chartH+40}" style="width:100%; height:auto; max-width:600px; display:block; margin:0 auto;">`;
+  bars.forEach((b,i) => {
+    const h = (b.val/maxVal) * chartH;
+    const x = gap + i*(barW+gap);
+    const y = chartH - h;
+    svg += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" fill="${b.color}" rx="4"/>`;
+    svg += `<text x="${x+barW/2}" y="${y-6}" font-size="11" text-anchor="middle" fill="#1a1a1a">${b.val.toFixed(0)}</text>`;
+    svg += `<text x="${x+barW/2}" y="${chartH+18}" font-size="11" text-anchor="middle" fill="#5F5E5A">${b.label}</text>`;
+  });
+  svg += `</svg>`;
+  container.innerHTML = svg;
 }
 </script>
 </body>
